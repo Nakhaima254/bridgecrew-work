@@ -1,1 +1,7 @@
 project_id = "mojbppmrfcrhpwgybhxr"
+
+[functions.send-team-invitation]
+verify_jwt = false
+
+[functions.send-task-assignment]
+verify_jwt = false
