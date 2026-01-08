@@ -19,6 +19,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface CreateTaskDialogProps {
   open: boolean;
@@ -27,7 +29,7 @@ interface CreateTaskDialogProps {
 }
 
 export function CreateTaskDialog({ open, onOpenChange, projectId }: CreateTaskDialogProps) {
-  const { addTask, teamMembers } = useProject();
+  const { addTask, teamMembers, projects } = useProject();
   
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -37,13 +39,16 @@ export function CreateTaskDialog({ open, onOpenChange, projectId }: CreateTaskDi
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
   const [dueDate, setDueDate] = useState('');
   const [tags, setTags] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!title.trim()) return;
 
-    addTask({
+    setIsSubmitting(true);
+
+    const newTask = addTask({
       projectId,
       title: title.trim(),
       description: description.trim(),
@@ -55,6 +60,39 @@ export function CreateTaskDialog({ open, onOpenChange, projectId }: CreateTaskDi
       tags: tags.split(',').map(t => t.trim()).filter(Boolean),
     });
 
+    // Send email notifications to assignees
+    if (assigneeIds.length > 0) {
+      const project = projects.find(p => p.id === projectId);
+      const assignees = teamMembers
+        .filter(m => assigneeIds.includes(m.id))
+        .map(m => ({ name: m.name, email: m.email }));
+
+      try {
+        const { error } = await supabase.functions.invoke('send-task-assignment', {
+          body: {
+            assignees,
+            taskTitle: title.trim(),
+            taskDescription: description.trim() || undefined,
+            projectName: project?.title || 'Project',
+            dueDate: dueDate || undefined,
+            priority,
+          },
+        });
+
+        if (error) {
+          console.error('Error sending task assignment emails:', error);
+          toast.error('Task created but failed to send email notifications');
+        } else {
+          toast.success('Task created and notifications sent to assignees');
+        }
+      } catch (error) {
+        console.error('Error sending task assignment emails:', error);
+        toast.error('Task created but failed to send email notifications');
+      }
+    } else {
+      toast.success('Task created successfully');
+    }
+
     // Reset form
     setTitle('');
     setDescription('');
@@ -64,6 +102,7 @@ export function CreateTaskDialog({ open, onOpenChange, projectId }: CreateTaskDi
     setAssigneeIds([]);
     setDueDate('');
     setTags('');
+    setIsSubmitting(false);
     
     onOpenChange(false);
   };
@@ -194,11 +233,11 @@ export function CreateTaskDialog({ open, onOpenChange, projectId }: CreateTaskDi
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button type="submit" disabled={!title.trim()}>
-              Create Task
+            <Button type="submit" disabled={!title.trim() || isSubmitting}>
+              {isSubmitting ? 'Creating...' : 'Create Task'}
             </Button>
           </DialogFooter>
         </form>
