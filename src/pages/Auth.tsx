@@ -25,6 +25,18 @@ export function Auth() {
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true);
+    const result = await lovable.auth.signInWithOAuth('google', {
+      redirect_uri: window.location.origin,
+    });
+    if (result.error) {
+      toast.error('Google sign-in failed. Please try again.');
+      setIsGoogleLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (user && !isLoading) {
