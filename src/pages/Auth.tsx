@@ -132,7 +132,10 @@ export function Auth() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="login-password">Password</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="login-password">Password</Label>
+                      <ForgotPasswordDialog />
+                    </div>
                     <Input
                       id="login-password"
                       type="password"
