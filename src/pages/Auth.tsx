@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { PasswordInput } from '@/components/auth/PasswordInput';
 import logoPortrait from '@/assets/logo-portrait.png';
 import { z } from 'zod';
 import { getSafeErrorMessage, logError } from '@/lib/errorHandler';
@@ -153,9 +154,8 @@ export function Auth() {
                       <Label htmlFor="login-password">Password</Label>
                       <ForgotPasswordDialog />
                     </div>
-                    <Input
+                    <PasswordInput
                       id="login-password"
-                      type="password"
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
@@ -215,9 +215,8 @@ export function Auth() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-password">Password</Label>
-                    <Input
+                    <PasswordInput
                       id="signup-password"
-                      type="password"
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
@@ -227,9 +226,8 @@ export function Auth() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-confirm-password">Confirm Password</Label>
-                    <Input
+                    <PasswordInput
                       id="signup-confirm-password"
-                      type="password"
                       placeholder="••••••••"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
