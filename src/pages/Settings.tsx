@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Camera, Loader2, Save, User } from 'lucide-react';
+import { Camera, Loader2, Save, User, Bell, Palette, Globe, LogOut, Mail, Phone, Briefcase, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { getSafeErrorMessage, logError } from '@/lib/errorHandler';
@@ -75,7 +78,6 @@ export function Settings() {
           email_notifications: data.email_notifications ?? true,
         });
       } else {
-        // Create profile if it doesn't exist
         const { data: newProfile, error: insertError } = await supabase
           .from('profiles')
           .insert({ user_id: user.id })
@@ -136,23 +138,13 @@ export function Settings() {
     const file = event.target.files?.[0];
     if (!file || !user) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
-      toast({
-        title: 'Error',
-        description: 'Please upload an image file',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'Please upload an image file', variant: 'destructive' });
       return;
     }
 
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: 'Error',
-        description: 'Image must be less than 5MB',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'Image must be less than 5MB', variant: 'destructive' });
       return;
     }
 
@@ -171,7 +163,6 @@ export function Settings() {
         .from('avatars')
         .getPublicUrl(fileName);
 
-      // Add cache buster to URL
       const avatarUrl = `${publicUrl}?t=${Date.now()}`;
 
       const { error: updateError } = await supabase
@@ -183,17 +174,10 @@ export function Settings() {
 
       setProfile(prev => prev ? { ...prev, avatar_url: avatarUrl } : null);
 
-      toast({
-        title: 'Success',
-        description: 'Avatar updated successfully',
-      });
+      toast({ title: 'Success', description: 'Avatar updated successfully' });
     } catch (error) {
       logError('handleAvatarUpload', error);
-      toast({
-        title: 'Error',
-        description: getSafeErrorMessage(error),
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: getSafeErrorMessage(error), variant: 'destructive' });
     } finally {
       setIsUploading(false);
     }
@@ -206,12 +190,7 @@ export function Settings() {
 
   const getInitials = () => {
     if (formData.full_name) {
-      return formData.full_name
-        .split(' ')
-        .map(n => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2);
+      return formData.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     }
     return user?.email?.[0]?.toUpperCase() || 'U';
   };
@@ -225,188 +204,321 @@ export function Settings() {
   }
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Settings</h1>
-        <p className="text-muted-foreground">Manage your profile and preferences</p>
+    <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto animate-fade-in">
+      {/* Page Header */}
+      <div className="mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground">Settings</h1>
+        <p className="text-muted-foreground mt-1">Manage your account, profile, and preferences</p>
       </div>
 
-      <div className="max-w-2xl space-y-6">
-        {/* Profile Section */}
-        <div className="p-6 rounded-lg border border-border bg-card">
-          <h2 className="text-lg font-semibold text-foreground mb-6">Profile</h2>
-          
-          {/* Avatar Upload */}
-          <div className="flex items-center gap-6 mb-6">
-            <div className="relative">
-              <Avatar className="h-20 w-20">
-                <AvatarImage src={profile?.avatar_url || undefined} />
-                <AvatarFallback className="bg-primary text-primary-foreground text-xl">
-                  {getInitials()}
-                </AvatarFallback>
-              </Avatar>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
-                className="absolute bottom-0 right-0 p-1.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
-              >
-                {isUploading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Camera className="h-4 w-4" />
-                )}
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleAvatarUpload}
-                className="hidden"
-              />
-            </div>
-            <div>
-              <p className="font-medium text-foreground">Profile Photo</p>
-              <p className="text-sm text-muted-foreground">Click the camera icon to upload</p>
-            </div>
+      <Tabs defaultValue="profile" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3 h-11">
+          <TabsTrigger value="profile" className="gap-2">
+            <User className="h-4 w-4 hidden sm:block" />
+            Profile
+          </TabsTrigger>
+          <TabsTrigger value="preferences" className="gap-2">
+            <Palette className="h-4 w-4 hidden sm:block" />
+            Preferences
+          </TabsTrigger>
+          <TabsTrigger value="account" className="gap-2">
+            <Shield className="h-4 w-4 hidden sm:block" />
+            Account
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Profile Tab */}
+        <TabsContent value="profile" className="space-y-6">
+          {/* Avatar Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Profile Photo</CardTitle>
+              <CardDescription>Upload a photo to personalize your account</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-6">
+                <div className="relative group">
+                  <Avatar className="h-24 w-24 ring-4 ring-background shadow-lg">
+                    <AvatarImage src={profile?.avatar_url || undefined} />
+                    <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-semibold">
+                      {getInitials()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                    className="absolute inset-0 flex items-center justify-center rounded-full bg-foreground/0 group-hover:bg-foreground/40 transition-all duration-200 cursor-pointer disabled:cursor-not-allowed"
+                  >
+                    <span className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      {isUploading ? (
+                        <Loader2 className="h-6 w-6 animate-spin text-background" />
+                      ) : (
+                        <Camera className="h-6 w-6 text-background" />
+                      )}
+                    </span>
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <p className="font-medium text-foreground">{formData.full_name || 'Your Name'}</p>
+                  <p className="text-sm text-muted-foreground">{user?.email}</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                  >
+                    <Camera className="h-3.5 w-3.5 mr-1.5" />
+                    Change Photo
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Personal Info Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Personal Information</CardTitle>
+              <CardDescription>Update your personal details</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="space-y-2">
+                  <Label htmlFor="full_name" className="flex items-center gap-1.5 text-sm font-medium">
+                    <User className="h-3.5 w-3.5 text-muted-foreground" />
+                    Full Name
+                  </Label>
+                  <Input
+                    id="full_name"
+                    value={formData.full_name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
+                    placeholder="Enter your full name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="job_title" className="flex items-center gap-1.5 text-sm font-medium">
+                    <Briefcase className="h-3.5 w-3.5 text-muted-foreground" />
+                    Job Title
+                  </Label>
+                  <Input
+                    id="job_title"
+                    value={formData.job_title}
+                    onChange={(e) => setFormData(prev => ({ ...prev, job_title: e.target.value }))}
+                    placeholder="e.g. Software Developer"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="flex items-center gap-1.5 text-sm font-medium">
+                    <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                    Email Address
+                  </Label>
+                  <Input
+                    id="email"
+                    value={user?.email || ''}
+                    disabled
+                    className="bg-muted/50 text-muted-foreground"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="flex items-center gap-1.5 text-sm font-medium">
+                    <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                    Phone Number
+                  </Label>
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                    placeholder="+1 234 567 8900"
+                  />
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="flex justify-end">
+                <Button onClick={handleSave} disabled={isSaving} className="min-w-[140px]">
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Changes
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Preferences Tab */}
+        <TabsContent value="preferences" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Appearance</CardTitle>
+              <CardDescription>Customize how the app looks and feels</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-0.5">
+                  <Label className="text-sm font-medium flex items-center gap-1.5">
+                    <Palette className="h-3.5 w-3.5 text-muted-foreground" />
+                    Theme
+                  </Label>
+                  <p className="text-sm text-muted-foreground">Choose your preferred color scheme</p>
+                </div>
+                <Select
+                  value={formData.theme}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, theme: value }))}
+                >
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="system">System</SelectItem>
+                    <SelectItem value="light">Light</SelectItem>
+                    <SelectItem value="dark">Dark</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-0.5">
+                  <Label className="text-sm font-medium flex items-center gap-1.5">
+                    <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+                    Timezone
+                  </Label>
+                  <p className="text-sm text-muted-foreground">Set your local timezone for accurate scheduling</p>
+                </div>
+                <Select
+                  value={formData.timezone}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, timezone: value }))}
+                >
+                  <SelectTrigger className="w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="UTC">UTC</SelectItem>
+                    <SelectItem value="America/New_York">Eastern Time</SelectItem>
+                    <SelectItem value="America/Chicago">Central Time</SelectItem>
+                    <SelectItem value="America/Denver">Mountain Time</SelectItem>
+                    <SelectItem value="America/Los_Angeles">Pacific Time</SelectItem>
+                    <SelectItem value="Europe/London">London</SelectItem>
+                    <SelectItem value="Europe/Paris">Paris</SelectItem>
+                    <SelectItem value="Asia/Tokyo">Tokyo</SelectItem>
+                    <SelectItem value="Asia/Shanghai">Shanghai</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Notifications</CardTitle>
+              <CardDescription>Configure how you receive notifications</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-0.5">
+                  <Label htmlFor="email_notifications" className="text-sm font-medium flex items-center gap-1.5">
+                    <Bell className="h-3.5 w-3.5 text-muted-foreground" />
+                    Email Notifications
+                  </Label>
+                  <p className="text-sm text-muted-foreground">Get notified about task assignments, updates, and mentions</p>
+                </div>
+                <Switch
+                  id="email_notifications"
+                  checked={formData.email_notifications}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, email_notifications: checked }))}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="flex justify-end">
+            <Button onClick={handleSave} disabled={isSaving} className="min-w-[140px]">
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Changes
+                </>
+              )}
+            </Button>
           </div>
+        </TabsContent>
 
-          {/* Form Fields */}
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="full_name">Full Name</Label>
-                <Input
-                  id="full_name"
-                  value={formData.full_name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
-                  placeholder="Enter your name"
-                />
+        {/* Account Tab */}
+        <TabsContent value="account" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Account Details</CardTitle>
+              <CardDescription>Your account information</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-md bg-primary/10">
+                    <Mail className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Email</p>
+                    <p className="text-sm text-muted-foreground">{user?.email}</p>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="job_title">Job Title</Label>
-                <Input
-                  id="job_title"
-                  value={formData.job_title}
-                  onChange={(e) => setFormData(prev => ({ ...prev, job_title: e.target.value }))}
-                  placeholder="e.g. Developer"
-                />
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-md bg-primary/10">
+                    <Shield className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Account ID</p>
+                    <p className="text-sm text-muted-foreground font-mono">{user?.id?.slice(0, 8)}...</p>
+                  </div>
+                </div>
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  value={user?.email || ''}
-                  disabled
-                  className="bg-muted"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                  placeholder="+1 234 567 8900"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Preferences Section */}
-        <div className="p-6 rounded-lg border border-border bg-card">
-          <h2 className="text-lg font-semibold text-foreground mb-6">Preferences</h2>
-          
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="timezone" className="text-base">Timezone</Label>
-                <p className="text-sm text-muted-foreground">Select your local timezone</p>
-              </div>
-              <Select
-                value={formData.timezone}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, timezone: value }))}
-              >
-                <SelectTrigger className="w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="UTC">UTC</SelectItem>
-                  <SelectItem value="America/New_York">Eastern Time</SelectItem>
-                  <SelectItem value="America/Chicago">Central Time</SelectItem>
-                  <SelectItem value="America/Denver">Mountain Time</SelectItem>
-                  <SelectItem value="America/Los_Angeles">Pacific Time</SelectItem>
-                  <SelectItem value="Europe/London">London</SelectItem>
-                  <SelectItem value="Europe/Paris">Paris</SelectItem>
-                  <SelectItem value="Asia/Tokyo">Tokyo</SelectItem>
-                  <SelectItem value="Asia/Shanghai">Shanghai</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="theme" className="text-base">Theme</Label>
-                <p className="text-sm text-muted-foreground">Choose your preferred theme</p>
-              </div>
-              <Select
-                value={formData.theme}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, theme: value }))}
-              >
-                <SelectTrigger className="w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="system">System</SelectItem>
-                  <SelectItem value="light">Light</SelectItem>
-                  <SelectItem value="dark">Dark</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="email_notifications" className="text-base">Email Notifications</Label>
-                <p className="text-sm text-muted-foreground">Receive email updates about your tasks</p>
-              </div>
-              <Switch
-                id="email_notifications"
-                checked={formData.email_notifications}
-                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, email_notifications: checked }))}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Save Button */}
-        <div className="flex justify-end">
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                Save Changes
-              </>
-            )}
-          </Button>
-        </div>
-
-        {/* Sign Out Section */}
-        <div className="p-6 rounded-lg border border-destructive/20 bg-card">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Sign Out</h2>
-          <p className="text-muted-foreground mb-4">Sign out of your account on this device.</p>
-          <Button variant="destructive" onClick={handleSignOut}>
-            Sign Out
-          </Button>
-        </div>
-      </div>
+          <Card className="border-destructive/30">
+            <CardHeader>
+              <CardTitle className="text-lg text-destructive flex items-center gap-2">
+                <LogOut className="h-5 w-5" />
+                Sign Out
+              </CardTitle>
+              <CardDescription>Sign out of your account on this device</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button variant="destructive" onClick={handleSignOut} className="w-full sm:w-auto">
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
