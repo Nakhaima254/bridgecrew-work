@@ -9,7 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { Loader2, LayoutDashboard } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import logoPortrait from '@/assets/logo-portrait.png';
 import { z } from 'zod';
 import { getSafeErrorMessage, logError } from '@/lib/errorHandler';
 import { PasswordStrengthIndicator } from '@/components/auth/PasswordStrengthIndicator';
