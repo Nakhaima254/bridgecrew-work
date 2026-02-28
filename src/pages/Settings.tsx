@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Camera, Loader2, Save, User, Bell, Palette, Globe, LogOut, Mail, Phone, Briefcase, Shield } from 'lucide-react';
+import { Camera, Loader2, Save, User, Bell, Palette, Globe, LogOut, Mail, Phone, Briefcase, Shield, Lock } from 'lucide-react';
+import { PasswordInput } from '@/components/auth/PasswordInput';
+import { PasswordStrengthIndicator } from '@/components/auth/PasswordStrengthIndicator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
