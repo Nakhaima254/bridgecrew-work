@@ -191,6 +191,35 @@ export function Settings() {
     }
   };
 
+  const handleChangePassword = async () => {
+    if (!passwordData.newPassword || !passwordData.confirmPassword) {
+      toast({ title: 'Error', description: 'Please fill in all password fields', variant: 'destructive' });
+      return;
+    }
+    if (passwordData.newPassword.length < 8) {
+      toast({ title: 'Error', description: 'New password must be at least 8 characters', variant: 'destructive' });
+      return;
+    }
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast({ title: 'Error', description: 'New passwords do not match', variant: 'destructive' });
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: passwordData.newPassword });
+      if (error) throw error;
+
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      toast({ title: 'Success', description: 'Password updated successfully' });
+    } catch (error) {
+      logError('handleChangePassword', error);
+      toast({ title: 'Error', description: getSafeErrorMessage(error), variant: 'destructive' });
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   const handleSignOut = async () => {
     await signOut();
     navigate('/auth');
